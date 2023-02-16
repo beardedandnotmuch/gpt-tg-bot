@@ -1,12 +1,22 @@
 package models
 
-type ReceiveMessage struct {
-	UpdateID    int         `json:"update_id"`
-	Message     Message     `json:"message"`
-	ChannelPost ChannelPost `json:"channel_post"`
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+)
+
+// ------- Received Message structures -----------
+
+type TGClientMessage struct {
+	UpdateID    int           `json:"update_id"`
+	Message     ClientMessage `json:"message"`
+	ChannelPost ChannelPost   `json:"channel_post"`
 }
 
-type Message struct {
+type ClientMessage struct {
 	MessageID int        `json:"message_id"`
 	From      From       `json:"from"`
 	Chat      Chat       `json:"chat"`
@@ -20,19 +30,6 @@ type ChannelPost struct {
 	Chat      Chat   `json:"chat"`
 	Date      int    `json:"date"`
 	Text      string `json:"text"`
-}
-
-type SendMessage struct {
-	Ok     bool   `json:"ok"`
-	Result Result `json:"result"`
-}
-
-type Result struct {
-	MessageID int    `json:"message_id"`
-	Date      int    `json:"date"`
-	Text      string `json:"text"`
-	From      From   `json:"from"`
-	Chat      Chat   `json:"chat"`
 }
 
 type From struct {
@@ -55,4 +52,43 @@ type Entities struct {
 	Type   string `json:"type"`
 	Offset int    `json:"offset"`
 	Length int    `json:"length"`
+}
+
+// ------- TGBot -----------
+
+type TGBot interface {
+	SendRequest(m string)
+	GetClientMessage() string
+	GetChaId() int
+}
+
+type TGStorage struct {
+	ClientMessage string
+	ChatId        int
+}
+
+func NewTGStorage(m string, cId int) *TGStorage {
+	return &TGStorage{
+		ClientMessage: m,
+		ChatId:        cId,
+	}
+}
+
+func (s *TGStorage) GetClientMessage() string {
+	return s.ClientMessage
+}
+
+func (s *TGStorage) GetChaId() int {
+	return s.ChatId
+}
+
+func (s *TGStorage) SendRequest(m string) {
+	_, err := http.PostForm(fmt.Sprintf("%s%s/sendMessage", os.Getenv("TG_API_URL"), os.Getenv("TG_APITOKEN")), url.Values{
+		"chat_id": {fmt.Sprint(s.GetChaId())},
+		"text":    {m},
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
