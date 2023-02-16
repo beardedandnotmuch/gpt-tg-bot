@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+
+## Build
+FROM golang:1.16-buster AS build
+
+WORKDIR /app
+
+COPY go.mod ./
+COPY go.sum ./
+
+RUN go mod download
+
+COPY *.go ./
+COPY models/* ./models/
+
+RUN go build -o /banm-gpt-tg-bot
+
+## Deploy
+FROM gcr.io/distroless/base-debian10
+
+WORKDIR /
+
+COPY --from=build /banm-gpt-tg-bot /banm-gpt-tg-bot
+COPY .env /
+
+EXPOSE 3000
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/banm-gpt-tg-bot"]

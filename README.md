@@ -1,0 +1,1 @@
+Link to connect your webhook server vs telegram API https://api.telegram.org/bot{YOUR_TELEGRAM_API_TOKEN}/setWebhook?url=https://{YOUR_WEBHOOK_DOMAIN}/api/v1/update
