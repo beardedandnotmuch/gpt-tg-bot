@@ -5,20 +5,17 @@ FROM golang:1.16-buster AS build
 
 WORKDIR /app
 
-RUN go get github.com/beardedandnotmuch/gpt-tg-bot/cmd/banm-gpt-tg-bot
+COPY . .
 
 RUN go mod download
-
-COPY .env ./
-
-RUN go build github.com/beardedandnotmuch/gpt-tg-bot/cmd/banm-gpt-tg-bot
+RUN go build ./cmd/banm-gpt-tg-bot
 
 ## Deploy
 FROM gcr.io/distroless/base-debian10
 
 WORKDIR /
 
-COPY --from=build /banm-gpt-tg-bot /banm-gpt-tg-bot
+COPY --from=build /app/banm-gpt-tg-bot /banm-gpt-tg-bot
 COPY .env /
 
 EXPOSE 3000
