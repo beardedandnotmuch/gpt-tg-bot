@@ -1,16 +1,14 @@
-package models
+package endpoint
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
-	"os"
 )
 
 // ------- Received Message structures -----------
 
-type TGClientMessage struct {
+type HandledClientMessage struct {
 	UpdateID    int           `json:"update_id"`
 	Message     ClientMessage `json:"message"`
 	ChannelPost ChannelPost   `json:"channel_post"`
@@ -54,41 +52,33 @@ type Entities struct {
 	Length int    `json:"length"`
 }
 
-// ------- TGBot -----------
-
-type TGBot interface {
-	SendRequest(m string)
-	GetClientMessage() string
-	GetChaId() int
+type Service interface {
+	NewBot(m string, Cid int)
+	NewGPT()
+	SendMessage(m string)
+	FixGrammar()
 }
 
-type TGStorage struct {
-	ClientMessage string
-	ChatId        int
+type Endpoint struct {
+	s Service
 }
 
-func NewTGStorage(m string, cId int) *TGStorage {
-	return &TGStorage{
-		ClientMessage: m,
-		ChatId:        cId,
+func New(s Service) *Endpoint {
+	return &Endpoint{
+		s: s,
 	}
 }
 
-func (s *TGStorage) GetClientMessage() string {
-	return s.ClientMessage
-}
+func (e *Endpoint) HandleClientMessage(w http.ResponseWriter, r *http.Request) {
+	message := &HandledClientMessage{}
 
-func (s *TGStorage) GetChaId() int {
-	return s.ChatId
-}
-
-func (s *TGStorage) SendRequest(m string) {
-	_, err := http.PostForm(fmt.Sprintf("%s%s/sendMessage", os.Getenv("TG_API_URL"), os.Getenv("TG_APITOKEN")), url.Values{
-		"chat_id": {fmt.Sprint(s.GetChaId())},
-		"text":    {m},
-	})
-
+	err := json.NewDecoder(r.Body).Decode(&message)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	e.s.NewBot(message.Message.Text, message.Message.Chat.ID)
+	e.s.NewGPT()
+
+	e.s.FixGrammar()
 }
