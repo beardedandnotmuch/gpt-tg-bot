@@ -38,7 +38,7 @@ func (s *Service) NewBot(m string, cId int) {
 
 func (s *Service) NewGPT() {
 	s.gpt = gpt.NewStorage()
-	s.cache = cache.NewRedisCache("redis-db:6379", 0, 10)
+	s.cache = cache.NewRedisCache("redis-db:"+os.Getenv("REDIS_PORT"), 0, 10)
 }
 
 func (s *Service) SendMessage(m string) {
@@ -76,8 +76,6 @@ func (s *Service) SendGPTRequest(m string) (string, error) {
 		"frequency_penalty": 0.0,
 		"presence_penalty":  0.0
 	}`)
-
-	fmt.Println(bytes.NewBuffer(data))
 
 	req, err := http.NewRequest("POST", os.Getenv("GPT_API_URL"), bytes.NewBuffer(data))
 

@@ -6,15 +6,17 @@ services:
       context: .
       dockerfile: Dockerfile.multistage
     ports:
-      - 3000:3000
+      - ${PORT}:${PORT}
     networks:
       - learning
+    depends_on:
+      - redis-db
   redis-db:
     image: redis:alpine
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
     container_name: redis-db
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass ${REDIS_PASSWORD} --port ${REDIS_PORT}
     networks:
       - learning
 
